@@ -1,0 +1,39 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Debug files
+debug_*
+*.debug
+
+# Examples directory (все содержимое)
+examples/
+
+# Test files and directory
+tests/
+test_*.rono
+*_test.rono
+
+# Temporary files
+*.tmp
+*.temp
+
+# Logs
+*.log
