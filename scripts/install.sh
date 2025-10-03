@@ -157,4 +157,4 @@ main() {
 }
 
 # Запуск
-main "$@"
+main "$@"# Force update
