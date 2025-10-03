@@ -1,0 +1,61 @@
+{
+  "name": "rono-language-support",
+  "displayName": "Rono Language Support",
+  "description": "Syntax highlighting and language support for Rono programming language",
+  "version": "1.0.0",
+  "publisher": "rono-lang",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "rono",
+    "programming language",
+    "syntax highlighting"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EvgeniiAndronov/Rono.git"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "rono",
+        "aliases": [
+          "Rono",
+          "rono"
+        ],
+        "extensions": [
+          ".rono"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/rono-light.png",
+          "dark": "./icons/rono-dark.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "rono",
+        "scopeName": "source.rono",
+        "path": "./rono.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "rono",
+        "path": "./snippets.json"
+      }
+    ]
+  },
+  "scripts": {
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^2.15.0"
+  }
+}

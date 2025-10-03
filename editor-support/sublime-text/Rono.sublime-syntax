@@ -1,0 +1,80 @@
+%YAML 1.2
+---
+name: Rono
+file_extensions:
+  - rono
+scope: source.rono
+
+contexts:
+  main:
+    - include: comments
+    - include: strings
+    - include: numbers
+    - include: keywords
+    - include: types
+    - include: functions
+    - include: operators
+
+  comments:
+    - match: //.*$
+      scope: comment.line.double-slash.rono
+    - match: /\*
+      scope: punctuation.definition.comment.begin.rono
+      push:
+        - meta_scope: comment.block.rono
+        - match: \*/
+          scope: punctuation.definition.comment.end.rono
+          pop: true
+
+  strings:
+    - match: '"'
+      scope: punctuation.definition.string.begin.rono
+      push:
+        - meta_scope: string.quoted.double.rono
+        - match: '\\.'
+          scope: constant.character.escape.rono
+        - match: '\{[^}]*\}'
+          scope: meta.embedded.expression.rono
+        - match: '"'
+          scope: punctuation.definition.string.end.rono
+          pop: true
+
+  numbers:
+    - match: '\b\d+\.\d+\b'
+      scope: constant.numeric.float.rono
+    - match: '\b\d+\b'
+      scope: constant.numeric.integer.rono
+
+  keywords:
+    - match: '\b(if|else|for|while|break|continue|ret|import)\b'
+      scope: keyword.control.rono
+    - match: '\b(chif|fn|struct|var|list|array|fn_for)\b'
+      scope: keyword.declaration.rono
+    - match: '\b(true|false|nil)\b'
+      scope: constant.language.rono
+    - match: '\b(self)\b'
+      scope: variable.language.rono
+
+  types:
+    - match: '\b(int|float|bool|str|pointer)\b'
+      scope: storage.type.primitive.rono
+    - match: '\b[A-Z][a-zA-Z0-9_]*\b'
+      scope: storage.type.rono
+
+  functions:
+    - match: '\b[a-z_][a-zA-Z0-9_]*(?=\s*\()'
+      scope: entity.name.function.rono
+    - match: '\b(con\.out|con\.in|randi|randf|rands|http\.get|http\.post)\b'
+      scope: support.function.builtin.rono
+
+  operators:
+    - match: '[+\-*/%]'
+      scope: keyword.operator.arithmetic.rono
+    - match: '(==|!=|<=|>=|<|>)'
+      scope: keyword.operator.comparison.rono
+    - match: '(&&|\|\||!)'
+      scope: keyword.operator.logical.rono
+    - match: '='
+      scope: keyword.operator.assignment.rono
+    - match: '[&*]'
+      scope: keyword.operator.pointer.rono
