@@ -31,6 +31,11 @@ curl -sSL https://raw.githubusercontent.com/EvgeniiAndronov/Rono/main/scripts/in
 iwr -useb https://raw.githubusercontent.com/EvgeniiAndronov/Rono/main/scripts/install.ps1 | iex
 ```
 
+**Windows (альтернативный способ):**
+```cmd
+curl -L https://raw.githubusercontent.com/EvgeniiAndronov/Rono/main/scripts/install-windows.cmd -o install.cmd && install.cmd
+```
+
 ### Пакетные менеджеры
 
 **Homebrew (macOS/Linux):**

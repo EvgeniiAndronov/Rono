@@ -88,7 +88,12 @@ install_from_source() {
     cargo build --release
     
     # Копирование бинарного файла
-    cp "target/release/$BINARY_NAME" "$TMP_DIR/"
+    if [ -f "target/release/$BINARY_NAME" ]; then
+        cp "target/release/$BINARY_NAME" "$TMP_DIR/"
+    else
+        echo -e "${RED}❌ Бинарный файл target/release/$BINARY_NAME не найден${NC}"
+        exit 1
+    fi
     cd "$TMP_DIR"
 }
 

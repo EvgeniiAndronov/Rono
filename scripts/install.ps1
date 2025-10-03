@@ -41,7 +41,7 @@ if (!(Get-Command cargo -ErrorAction SilentlyContinue)) {
     try {
         # Загрузка и установка Rust
         $RustInstaller = "$env:TEMP\rustup-init.exe"
-        Invoke-WebRequest -Uri "https://win.rustup.rs/x86_64" -OutFile $RustInstaller
+        Invoke-WebRequest -Uri "https://win.rustup.rs/x86_64" -OutFile $RustInstaller -UseBasicParsing
         Start-Process -FilePath $RustInstaller -ArgumentList "-y" -Wait
         
         # Обновление PATH для текущей сессии
