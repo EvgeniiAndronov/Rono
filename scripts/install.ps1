@@ -74,7 +74,7 @@ try {
     Write-ColorOutput Yellow "📥 Клонирование репозитория..."
     Set-Location $TempDir
     git clone "https://github.com/$Repo.git"
-    Set-Location "rono-lang"
+    Set-Location "Rono"
     
     # Сборка проекта
     Write-ColorOutput Yellow "🔨 Сборка проекта (это может занять несколько минут)..."
