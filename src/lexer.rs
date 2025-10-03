@@ -20,8 +20,11 @@ pub enum Token {
     Case,
     Default,
     Ret,
+    Break,
+    Continue,
     Import,
     As,
+    Ref,
     
     // Types
     Int,
@@ -317,8 +320,11 @@ impl Lexer {
             "case" => Token::Case,
             "default" => Token::Default,
             "ret" => Token::Ret,
+            "break" => Token::Break,
+            "continue" => Token::Continue,
             "import" => Token::Import,
             "as" => Token::As,
+            "ref" => Token::Ref,
             "int" => Token::Int,
             "float" => Token::Float,
             "str" => Token::Str,
@@ -343,9 +349,26 @@ impl Lexer {
                     self.column += 1;
                 }
                 self.advance();
+            } else if ch == '/' && self.peek_next() == Some('/') {
+                // Skip line comment
+                self.skip_line_comment();
             } else {
                 break;
             }
+        }
+    }
+    
+    fn skip_line_comment(&mut self) {
+        // Skip the '//' characters
+        self.advance(); // first '/'
+        self.advance(); // second '/'
+        
+        // Skip until end of line or end of file
+        while let Some(ch) = self.peek() {
+            if ch == '\n' {
+                break;
+            }
+            self.advance();
         }
     }
     

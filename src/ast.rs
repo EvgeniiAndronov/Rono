@@ -32,6 +32,7 @@ pub struct Function {
 pub struct Parameter {
     pub name: String,
     pub param_type: ChifType,
+    pub is_reference: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -67,6 +68,8 @@ pub enum Statement {
     While(WhileStatement),
     Switch(SwitchStatement),
     Return(Option<Expression>),
+    Break,
+    Continue,
 }
 
 #[derive(Debug, Clone)]
@@ -94,7 +97,7 @@ pub struct IfStatement {
 pub struct ForStatement {
     pub init: Option<Box<Statement>>,
     pub condition: Option<Expression>,
-    pub update: Option<Expression>,
+    pub update: Option<Box<Statement>>,
     pub body: Block,
 }
 
@@ -141,7 +144,7 @@ pub struct BinaryOp {
     pub right: Box<Expression>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BinaryOperator {
     Add,
     Subtract,
@@ -164,7 +167,7 @@ pub struct UnaryOp {
     pub operand: Box<Expression>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum UnaryOperator {
     Not,
     Minus,

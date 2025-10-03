@@ -35,6 +35,12 @@ pub enum ChifError {
     
     #[error("Return value")]
     Return(crate::types::ChifValue),
+    
+    #[error("Break statement")]
+    Break,
+    
+    #[error("Continue statement")]
+    Continue,
 }
 
 pub type Result<T> = std::result::Result<T, ChifError>;

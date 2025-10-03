@@ -95,6 +95,14 @@ impl Parser {
         let mut params = Vec::new();
         if !self.check(&Token::RightParen) {
             loop {
+                // Check for 'ref' keyword
+                let is_reference = if self.check(&Token::Ref) {
+                    self.advance(); // consume 'ref'
+                    true
+                } else {
+                    false
+                };
+                
                 let param_name = match self.advance() {
                     Token::Identifier(name) => name,
                     _ => return Err(ChifError::ParserError {
@@ -113,6 +121,7 @@ impl Parser {
                 params.push(Parameter {
                     name: param_name,
                     param_type,
+                    is_reference,
                 });
                 
                 if !self.match_token(&Token::Comma) {
@@ -190,7 +199,18 @@ impl Parser {
         
         let mut methods = Vec::new();
         while !self.check(&Token::RightBrace) && !self.is_at_end() {
-            methods.push(self.parse_function(false)?);
+            let mut method = self.parse_function(false)?;
+            
+            // Replace 'Self' type with actual struct name in parameters
+            for param in &mut method.params {
+                if let ChifType::Struct(type_name) = &param.param_type {
+                    if type_name == "Self" {
+                        param.param_type = ChifType::Struct(struct_name.clone());
+                    }
+                }
+            }
+            
+            methods.push(method);
         }
         
         self.consume(Token::RightBrace, "Expected '}' after struct methods")?;
@@ -318,6 +338,8 @@ impl Parser {
             Token::While => self.parse_while_statement(),
             Token::Switch => self.parse_switch_statement(),
             Token::Ret => self.parse_return_statement(),
+            Token::Break => self.parse_break_statement(),
+            Token::Continue => self.parse_continue_statement(),
             _ => {
                 let expr = self.parse_expression()?;
                 
@@ -439,26 +461,51 @@ impl Parser {
         self.consume(Token::For, "Expected 'for'")?;
         self.consume(Token::LeftParen, "Expected '(' after 'for'")?;
         
-        // Parse initialization (variable assignment)
+        // Parse initialization - support both var declaration and assignment
         let init = if !self.check(&Token::Semicolon) {
-            // Parse as assignment: i = 0
-            let var_name = match self.advance() {
-                Token::Identifier(name) => name,
-                _ => return Err(ChifError::ParserError {
-                    message: "Expected variable name in for loop initialization".to_string(),
-                }),
-            };
-            
-            self.consume(Token::Assign, "Expected '=' in for loop initialization")?;
-            let value = self.parse_expression()?;
-            
-            // Create a variable declaration statement
-            Some(Box::new(Statement::VarDecl(VarDecl {
-                name: var_name,
-                var_type: crate::types::ChifType::Int, // Assume int for now
-                value: Some(value),
-                is_mutable: true,
-            })))
+            if self.check(&Token::Var) {
+                // Parse variable declaration: var i: int = 0
+                self.advance(); // consume 'var'
+                let name = match self.advance() {
+                    Token::Identifier(name) => name,
+                    _ => return Err(ChifError::ParserError {
+                        message: "Expected variable name".to_string(),
+                    }),
+                };
+                
+                self.consume(Token::Colon, "Expected ':' after variable name")?;
+                let var_type = self.parse_type()?;
+                
+                let value = if self.match_token(&Token::Assign) {
+                    Some(self.parse_expression()?)
+                } else {
+                    None
+                };
+                
+                Some(Box::new(Statement::VarDecl(VarDecl {
+                    name,
+                    var_type,
+                    value,
+                    is_mutable: true,
+                })))
+            } else {
+                // Parse assignment: i = 0
+                let var_name = match self.advance() {
+                    Token::Identifier(name) => name,
+                    _ => return Err(ChifError::ParserError {
+                        message: "Expected variable name in for loop initialization".to_string(),
+                    }),
+                };
+                
+                self.consume(Token::Assign, "Expected '=' in for loop initialization")?;
+                let value = self.parse_expression()?;
+                
+                // Create an assignment statement
+                Some(Box::new(Statement::Assignment(Assignment {
+                    target: Expression::Identifier(var_name),
+                    value,
+                })))
+            }
         } else {
             None
         };
@@ -473,7 +520,21 @@ impl Parser {
         self.consume(Token::Semicolon, "Expected ';' after for condition")?;
         
         let update = if !self.check(&Token::RightParen) {
-            Some(self.parse_expression()?)
+            // Parse update as assignment: i = i + 1
+            let var_name = match self.advance() {
+                Token::Identifier(name) => name,
+                _ => return Err(ChifError::ParserError {
+                    message: "Expected variable name in for loop update".to_string(),
+                }),
+            };
+            
+            self.consume(Token::Assign, "Expected '=' in for loop update")?;
+            let value = self.parse_expression()?;
+            
+            Some(Box::new(Statement::Assignment(Assignment {
+                target: Expression::Identifier(var_name),
+                value,
+            })))
         } else {
             None
         };
@@ -538,6 +599,18 @@ impl Parser {
         self.consume(Token::Semicolon, "Expected ';' after return statement")?;
         
         Ok(Statement::Return(value))
+    }
+    
+    fn parse_break_statement(&mut self) -> Result<Statement> {
+        self.consume(Token::Break, "Expected 'break'")?;
+        self.consume(Token::Semicolon, "Expected ';' after break statement")?;
+        Ok(Statement::Break)
+    }
+    
+    fn parse_continue_statement(&mut self) -> Result<Statement> {
+        self.consume(Token::Continue, "Expected 'continue'")?;
+        self.consume(Token::Semicolon, "Expected ';' after continue statement")?;
+        Ok(Statement::Continue)
     }
     
     fn parse_expression(&mut self) -> Result<Expression> {

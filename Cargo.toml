@@ -1,7 +1,23 @@
 [package]
 name = "rono-lang"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "Rono - современный интерпретируемый язык программирования с поддержкой структур, указателей и модулей"
+license = "MIT"
+repository = "https://github.com/yourusername/rono-lang"
+homepage = "https://github.com/yourusername/rono-lang"
+documentation = "https://docs.rs/rono-lang"
+keywords = ["programming-language", "interpreter", "rono", "scripting", "jit"]
+categories = ["development-tools", "compilers"]
+readme = "README.md"
+exclude = [
+    "target/*",
+    ".git/*",
+    ".github/*",
+    "examples/*",
+    "interpreter_test_suite/*"
+]
 
 [lib]
 name = "rono_lang"
@@ -17,6 +33,13 @@ thiserror = "1.0"
 rand = "0.8"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
 serde_json = "1.0"
+# Cranelift dependencies for compilation
+cranelift = "0.100"
+cranelift-module = "0.100"
+cranelift-object = "0.100"
+cranelift-jit = "0.100"
+object = "0.32"
+target-lexicon = "0.12"
 
 [dev-dependencies]
 tempfile = "3.0"

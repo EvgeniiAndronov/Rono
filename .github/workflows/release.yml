@@ -1,0 +1,211 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+        required: true
+        default: 'v1.0.0'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          
+      - name: Run tests
+        run: cargo test --verbose
+        
+      - name: Run interpreter tests
+        run: |
+          cargo build --release
+          ./target/release/rono run interpreter_test_suite/01_basic_types.rono
+          ./target/release/rono run interpreter_test_suite/02_structs_methods.rono
+          ./target/release/rono run interpreter_test_suite/03_arrays_lists.rono
+          ./target/release/rono run interpreter_test_suite/04_control_flow.rono
+          ./target/release/rono run interpreter_test_suite/05_pointers.rono
+          ./target/release/rono run interpreter_test_suite/06_modules.rono
+
+  build:
+    name: Build Release Binaries
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: rono
+            asset_name: rono-linux-x86_64
+            
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            artifact_name: rono
+            asset_name: rono-linux-aarch64
+            
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: rono
+            asset_name: rono-macos-x86_64
+            
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: rono
+            asset_name: rono-macos-aarch64
+            
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: rono.exe
+            asset_name: rono-windows-x86_64
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+          
+      - name: Install cross-compilation tools
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+          
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          
+      - name: Build binary
+        run: cargo build --release --target ${{ matrix.target }}
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+          
+      - name: Create archive
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            7z a ../../../${{ matrix.asset_name }}.zip ${{ matrix.artifact_name }}
+          else
+            tar -czf ../../../${{ matrix.asset_name }}.tar.gz ${{ matrix.artifact_name }}
+          fi
+          
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}.*
+
+  create-release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        
+      - name: Get version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          release_name: Rono Language ${{ steps.version.outputs.version }}
+          body: |
+            ## 🚀 Rono Language ${{ steps.version.outputs.version }}
+            
+            ### 📦 Установка
+            
+            **Быстрая установка:**
+            ```bash
+            # macOS/Linux
+            curl -sSL https://raw.githubusercontent.com/${{ github.repository }}/main/scripts/install.sh | bash
+            
+            # Windows (PowerShell)
+            iwr -useb https://raw.githubusercontent.com/${{ github.repository }}/main/scripts/install.ps1 | iex
+            ```
+            
+            **Или скачайте бинарные файлы ниже для вашей платформы.**
+            
+            ### ✨ Возможности
+            - Базовые типы данных (int, float, bool, str, nil)
+            - Структуры и методы
+            - Массивы и списки с методами
+            - Циклы и условия (for, while, if-else)
+            - Указатели и ссылки
+            - Система модулей и импортов
+            - Встроенные функции (консоль, HTTP, случайные числа)
+            - Строковая интерполяция
+            
+            ### 🎯 Быстрый старт
+            ```rono
+            chif main() {
+                con.out("Hello, World!");
+            }
+            ```
+            
+            Сохраните как `hello.rono` и запустите: `rono run hello.rono`
+          draft: false
+          prerelease: false
+          
+      - name: Upload Release Assets
+        run: |
+          for asset in rono-*/*; do
+            echo "Uploading $asset"
+            gh release upload ${{ steps.version.outputs.version }} "$asset"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-crates:
+    name: Publish to crates.io
+    needs: create-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        
+      - name: Publish to crates.io
+        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true

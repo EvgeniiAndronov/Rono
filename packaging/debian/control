@@ -1,0 +1,26 @@
+Source: rono-lang
+Section: devel
+Priority: optional
+Maintainer: Your Name <your.email@example.com>
+Build-Depends: debhelper (>= 10), cargo, rustc (>= 1.70), pkg-config
+Standards-Version: 4.6.0
+Homepage: https://github.com/yourusername/rono-lang
+Vcs-Git: https://github.com/yourusername/rono-lang.git
+Vcs-Browser: https://github.com/yourusername/rono-lang
+
+Package: rono
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Rono programming language interpreter
+ Rono is a modern interpreted programming language with support for:
+ .
+  * Basic data types (int, float, bool, str, nil)
+  * Structures and methods
+  * Arrays and lists with built-in methods
+  * Control flow (for, while, if-else)
+  * Pointers and references
+  * Module system with imports
+  * Built-in functions (console, HTTP, random numbers)
+  * String interpolation
+ .
+ This package contains the Rono interpreter and standard library modules.

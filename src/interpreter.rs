@@ -187,29 +187,22 @@ impl Interpreter {
                         }
                     }
                     
-                    self.execute_block(&for_stmt.body)?;
+                    match self.execute_block(&for_stmt.body) {
+                        Ok(()) => {},
+                        Err(ChifError::Break) => break,
+                        Err(ChifError::Continue) => {
+                            // Execute update and continue
+                            if let Some(update) = &for_stmt.update {
+                                self.execute_statement(update)?;
+                            }
+                            continue;
+                        },
+                        Err(e) => return Err(e),
+                    }
                     
                     if let Some(update) = &for_stmt.update {
-                        // Handle assignment in update expression (support both + and -)
-                        if let Expression::Binary(binary_op) = update {
-                            if matches!(binary_op.operator, BinaryOperator::Add | BinaryOperator::Subtract) {
-                                if let Expression::Identifier(var_name) = &*binary_op.left {
-                                    let current_val = self.get_variable(var_name)?;
-                                    let increment = self.evaluate_expression(&binary_op.right)?;
-                                    
-                                    if let (ChifValue::Int(current), ChifValue::Int(inc)) = (current_val, increment) {
-                                        let new_value = match binary_op.operator {
-                                            BinaryOperator::Add => current + inc,
-                                            BinaryOperator::Subtract => current - inc,
-                                            _ => current,
-                                        };
-                                        self.set_variable(var_name, ChifValue::Int(new_value))?;
-                                    }
-                                }
-                            }
-                        } else {
-                            self.evaluate_expression(update)?;
-                        }
+                        // Execute update statement
+                        self.execute_statement(update)?;
                     }
                 }
                 
@@ -222,7 +215,13 @@ impl Interpreter {
                     if !self.is_truthy(&condition) {
                         break;
                     }
-                    self.execute_block(&while_stmt.body)?;
+                    
+                    match self.execute_block(&while_stmt.body) {
+                        Ok(()) => {},
+                        Err(ChifError::Break) => break,
+                        Err(ChifError::Continue) => continue,
+                        Err(e) => return Err(e),
+                    }
                 }
             }
             Statement::Switch(switch_stmt) => {
@@ -252,6 +251,12 @@ impl Interpreter {
                 };
                 
                 return Err(ChifError::Return(value));
+            }
+            Statement::Break => {
+                return Err(ChifError::Break);
+            }
+            Statement::Continue => {
+                return Err(ChifError::Continue);
             }
         }
         Ok(())

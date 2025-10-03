@@ -1,0 +1,28 @@
+fn add(a: int, b: int) int {
+    ret a + b;
+}
+
+fn multiply(x: int, y: int) int  {
+    ret x * y;
+}
+
+fn square(n: int) int  {
+    ret n * n;
+}
+
+fn factorial(n: int) int {
+    if (n <= 1) {
+        ret 1;
+    } else {
+        var prev: int = factorial(n - 1);
+        ret n * prev;
+    }
+}
+
+fn foo(a: int) int {
+    if (a > 10) {
+        ret a;
+    } else {
+        ret 0;
+    }
+}

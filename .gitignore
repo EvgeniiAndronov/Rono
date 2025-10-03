@@ -18,6 +18,8 @@ Thumbs.db
 *.dll
 *.so
 *.dylib
+*.o
+build/
 
 # Debug files
 debug_*
@@ -25,6 +27,7 @@ debug_*
 
 # Examples directory (все содержимое)
 examples/
+interpreter_test_suite/
 
 # Test files and directory
 tests/

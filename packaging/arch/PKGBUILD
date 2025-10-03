@@ -1,0 +1,59 @@
+# Maintainer: Your Name <your.email@example.com>
+pkgname=rono-lang
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Rono - современный интерпретируемый язык программирования"
+arch=('x86_64' 'aarch64')
+url="https://github.com/yourusername/rono-lang"
+license=('MIT')
+depends=()
+makedepends=('cargo' 'rust' 'git')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/yourusername/rono-lang/archive/v$pkgver.tar.gz")
+sha256sums=('YOUR_SHA256_HASH_HERE')
+
+prepare() {
+    cd "$pkgname-$pkgver"
+    export RUSTUP_TOOLCHAIN=stable
+    cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
+}
+
+build() {
+    cd "$pkgname-$pkgver"
+    export RUSTUP_TOOLCHAIN=stable
+    export CARGO_TARGET_DIR=target
+    cargo build --frozen --release --all-features
+}
+
+check() {
+    cd "$pkgname-$pkgver"
+    export RUSTUP_TOOLCHAIN=stable
+    # Запуск базовых тестов
+    cargo test --frozen
+    
+    # Проверка работы интерпретатора
+    echo 'chif main() { con.out("Test OK"); }' > test.rono
+    ./target/release/rono run test.rono
+}
+
+package() {
+    cd "$pkgname-$pkgver"
+    
+    # Установка основного бинарного файла
+    install -Dm755 "target/release/rono" "$pkgdir/usr/bin/rono"
+    
+    # Установка документации
+    install -Dm644 "README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
+    install -Dm644 "DEPLOYMENT_GUIDE.md" "$pkgdir/usr/share/doc/$pkgname/DEPLOYMENT_GUIDE.md"
+    
+    # Установка лицензии
+    install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    
+    # Установка примеров
+    mkdir -p "$pkgdir/usr/share/$pkgname"
+    cp -r "examples" "$pkgdir/usr/share/$pkgname/"
+    cp -r "interpreter_test_suite" "$pkgdir/usr/share/$pkgname/"
+    
+    # Установка модулей
+    install -Dm644 "math_utils.rono" "$pkgdir/usr/share/$pkgname/modules/math_utils.rono"
+    install -Dm644 "string_utils.rono" "$pkgdir/usr/share/$pkgname/modules/string_utils.rono"
+}

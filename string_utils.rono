@@ -1,0 +1,26 @@
+// String utilities module
+
+struct StringProcessor {
+    prefix: str,
+    suffix: str,
+}
+
+fn_for StringProcessor {
+    fn print_info(self) {
+        con.out("StringProcessor: '{self.prefix}' + text + '{self.suffix}'");
+    }
+    
+    fn process_string(self, text: str) {
+        con.out("{self.prefix}{text}{self.suffix}");
+    }
+}
+
+fn print_greeting(name: str) {
+    con.out("Hello, {name}! Welcome to Rono!");
+}
+
+fn print_banner(title: str) {
+    con.out("=================================");
+    con.out("         {title}");
+    con.out("=================================");
+}

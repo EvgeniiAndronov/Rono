@@ -1,0 +1,34 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export CARGO_HOME = $(CURDIR)/debian/cargo_home
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	cargo build --release
+
+override_dh_auto_install:
+	install -D -m755 target/release/rono debian/rono/usr/bin/rono
+	
+	# Установка документации
+	install -D -m644 README.md debian/rono/usr/share/doc/rono/README.md
+	install -D -m644 DEPLOYMENT_GUIDE.md debian/rono/usr/share/doc/rono/DEPLOYMENT_GUIDE.md
+	
+	# Установка примеров
+	mkdir -p debian/rono/usr/share/rono
+	cp -r examples debian/rono/usr/share/rono/
+	cp -r interpreter_test_suite debian/rono/usr/share/rono/
+	
+	# Установка модулей
+	mkdir -p debian/rono/usr/share/rono/modules
+	install -m644 math_utils.rono debian/rono/usr/share/rono/modules/
+	install -m644 string_utils.rono debian/rono/usr/share/rono/modules/
+
+override_dh_auto_test:
+	cargo test
+
+override_dh_auto_clean:
+	cargo clean || true
+	rm -rf debian/cargo_home
