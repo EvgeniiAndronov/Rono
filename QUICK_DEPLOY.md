@@ -131,10 +131,10 @@ repository = "https://github.com/YOURUSERNAME/rono-lang"  # Ваш репози�
 
 ```bash
 # macOS/Linux
-curl -sSL https://raw.githubusercontent.com/YOURUSERNAME/rono-lang/main/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/EvgeniiAndronov/Rono/main/scripts/install.sh | bash
 
 # Windows (PowerShell)
-iwr -useb https://raw.githubusercontent.com/YOURUSERNAME/rono-lang/main/scripts/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/EvgeniiAndronov/Rono/main/scripts/install.ps1 | iex
 ```
 
 ## 📈 Продвижение

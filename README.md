@@ -1,8 +1,8 @@
 # 🚀 Rono Programming Language
 
-[![Release](https://img.shields.io/github/v/release/yourusername/rono-lang)](https://github.com/yourusername/rono-lang/releases)
+[![Release](https://img.shields.io/github/v/release/EvgeniiAndronov/Rono)](https://github.com/EvgeniiAndronov/Rono/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/yourusername/rono-lang/workflows/Release/badge.svg)](https://github.com/yourusername/rono-lang/actions)
+[![Build Status](https://github.com/EvgeniiAndronov/Rono/workflows/Release/badge.svg)](https://github.com/EvgeniiAndronov/Rono/actions)
 
 Rono - современный интерпретируемый язык программирования с поддержкой структур, указателей, модулей и многого другого.
 
@@ -23,12 +23,12 @@ Rono - современный интерпретируемый язык прог
 
 **macOS/Linux:**
 ```bash
-curl -sSL https://raw.githubusercontent.com/yourusername/rono-lang/main/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/EvgeniiAndronov/Rono/main/scripts/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-iwr -useb https://raw.githubusercontent.com/yourusername/rono-lang/main/scripts/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/EvgeniiAndronov/Rono/main/scripts/install.ps1 | iex
 ```
 
 ### Пакетные менеджеры
@@ -54,15 +54,15 @@ cargo install rono-lang
 ### Из исходного кода
 
 ```bash
-git clone https://github.com/yourusername/rono-lang.git
-cd rono-lang
+git clone https://github.com/EvgeniiAndronov/Rono.git
+cd Rono
 cargo build --release
 sudo cp target/release/rono /usr/local/bin/
 ```
 
 ### Скачать бинарные файлы
 
-Скачайте готовые бинарные файлы для вашей платформы со страницы [Releases](https://github.com/yourusername/rono-lang/releases).
+Скачайте готовые бинарные файлы для вашей платформы со страницы [Releases](https://github.com/EvgeniiAndronov/Rono/releases).
 
 ## 🎯 Быстрый старт
 
@@ -220,9 +220,9 @@ cargo run -- run examples/hello.rono
 
 ## 📞 Поддержка
 
-- 🐛 [Сообщить об ошибке](https://github.com/yourusername/rono-lang/issues)
-- 💡 [Предложить функцию](https://github.com/yourusername/rono-lang/issues)
-- 💬 [Обсуждения](https://github.com/yourusername/rono-lang/discussions)
+- 🐛 [Сообщить об ошибке](https://github.com/EvgeniiAndronov/Rono/issues)
+- 💡 [Предложить функцию](https://github.com/EvgeniiAndronov/Rono/issues)
+- 💬 [Обсуждения](https://github.com/EvgeniiAndronov/Rono/discussions)
 
 ---
 

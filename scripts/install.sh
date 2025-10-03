@@ -10,7 +10,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Информация о проекте
-REPO="yourusername/rono-lang"
+REPO="EvgeniiAndronov/Rono"
 BINARY_NAME="rono"
 INSTALL_DIR="/usr/local/bin"
 

@@ -2,11 +2,11 @@
 name = "rono-lang"
 version = "1.0.0"
 edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Evgenii Andronov <evgenii.andronov@example.com>"]
 description = "Rono - современный интерпретируемый язык программирования с поддержкой структур, указателей и модулей"
 license = "MIT"
-repository = "https://github.com/yourusername/rono-lang"
-homepage = "https://github.com/yourusername/rono-lang"
+repository = "https://github.com/EvgeniiAndronov/Rono"
+homepage = "https://github.com/EvgeniiAndronov/Rono"
 documentation = "https://docs.rs/rono-lang"
 keywords = ["programming-language", "interpreter", "rono", "scripting", "jit"]
 categories = ["development-tools", "compilers"]

@@ -2,7 +2,7 @@
 param(
     [string]$InstallDir = "$env:LOCALAPPDATA\Programs\Rono",
     [switch]$AddToPath = $true,
-    [string]$Repo = "yourusername/rono-lang"
+    [string]$Repo = "EvgeniiAndronov/Rono"
 )
 
 $ErrorActionPreference = "Stop"
