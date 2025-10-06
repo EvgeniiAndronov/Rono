@@ -1,0 +1,166 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Rono",
+  "scopeName": "source.rono",
+  "fileTypes": ["rono"],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#punctuation"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.rono",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.rono",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.rono",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.rono",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.rono",
+          "match": "\\b\\d+\\.\\d+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.rono",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.rono",
+          "match": "\\b(if|else|for|while|break|continue|ret|import)\\b"
+        },
+        {
+          "name": "keyword.declaration.rono",
+          "match": "\\b(chif|fn|struct|var|list|array|fn_for)\\b"
+        },
+        {
+          "name": "keyword.operator.rono",
+          "match": "\\b(and|or|not)\\b"
+        },
+        {
+          "name": "constant.language.rono",
+          "match": "\\b(true|false|nil)\\b"
+        },
+        {
+          "name": "variable.language.rono",
+          "match": "\\b(self)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "storage.type.primitive.rono",
+          "match": "\\b(int|float|bool|str|pointer)\\b"
+        },
+        {
+          "name": "storage.type.rono",
+          "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.rono",
+          "match": "\\b[a-z_][a-zA-Z0-9_]*(?=\\s*\\()"
+        },
+        {
+          "name": "support.function.builtin.rono",
+          "match": "\\b(con\\.out|con\\.in|randi|randf|rands|http\\.get|http\\.post|abs|sqrt)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.arithmetic.rono",
+          "match": "[+\\-*/%]"
+        },
+        {
+          "name": "keyword.operator.comparison.rono",
+          "match": "(==|!=|<=|>=|<|>)"
+        },
+        {
+          "name": "keyword.operator.logical.rono",
+          "match": "(&&|\\|\\||!)"
+        },
+        {
+          "name": "keyword.operator.assignment.rono",
+          "match": "="
+        },
+        {
+          "name": "keyword.operator.pointer.rono",
+          "match": "[&*]"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.separator.rono",
+          "match": "[,;]"
+        },
+        {
+          "name": "punctuation.section.brackets.rono",
+          "match": "[\\[\\]]"
+        },
+        {
+          "name": "punctuation.section.braces.rono",
+          "match": "[{}]"
+        },
+        {
+          "name": "punctuation.section.parens.rono",
+          "match": "[()]"
+        }
+      ]
+    }
+  }
+}

@@ -1,121 +1,251 @@
 {
-  "Main function": {
-    "prefix": "main",
-    "body": [
-      "chif main() {",
-      "\t$1",
-      "}"
-    ],
-    "description": "Create main function"
-  },
-  "Function": {
-    "prefix": "fn",
-    "body": [
-      "fn ${1:function_name}(${2:params}) ${3:return_type} {",
-      "\t$4",
-      "\tret $5;",
-      "}"
-    ],
-    "description": "Create function"
-  },
-  "Struct": {
-    "prefix": "struct",
-    "body": [
-      "struct ${1:StructName} {",
-      "\t${2:field}: ${3:type},",
-      "}"
-    ],
-    "description": "Create struct"
-  },
-  "Struct method": {
-    "prefix": "method",
-    "body": [
-      "fn_for ${1:StructName} {",
-      "\tfn ${2:method_name}(self${3:, params}) ${4:return_type} {",
-      "\t\t$5",
-      "\t}",
-      "}"
-    ],
-    "description": "Create struct method"
-  },
-  "If statement": {
-    "prefix": "if",
-    "body": [
-      "if (${1:condition}) {",
-      "\t$2",
-      "}"
-    ],
-    "description": "Create if statement"
-  },
-  "If-else statement": {
-    "prefix": "ifelse",
-    "body": [
-      "if (${1:condition}) {",
-      "\t$2",
-      "} else {",
-      "\t$3",
-      "}"
-    ],
-    "description": "Create if-else statement"
-  },
-  "For loop": {
-    "prefix": "for",
-    "body": [
-      "for (${1:i} = ${2:0}; ${1:i} < ${3:length}; ${1:i} = ${1:i} + 1) {",
-      "\t$4",
-      "}"
-    ],
-    "description": "Create for loop"
-  },
-  "While loop": {
-    "prefix": "while",
-    "body": [
-      "while (${1:condition}) {",
-      "\t$2",
-      "}"
-    ],
-    "description": "Create while loop"
-  },
-  "Variable declaration": {
-    "prefix": "var",
-    "body": [
-      "var ${1:name}: ${2:type} = ${3:value};"
-    ],
-    "description": "Create variable"
-  },
-  "List declaration": {
-    "prefix": "list",
-    "body": [
-      "list ${1:name}: ${2:type}[] = [${3:values}];"
-    ],
-    "description": "Create list"
-  },
-  "Array declaration": {
-    "prefix": "array",
-    "body": [
-      "var ${1:name}: array[${2:type}] = [${3:values}];"
-    ],
-    "description": "Create array"
-  },
-  "Console output": {
-    "prefix": "cout",
-    "body": [
-      "con.out(\"${1:message}\");"
-    ],
-    "description": "Console output"
-  },
-  "Console output with interpolation": {
-    "prefix": "coutf",
-    "body": [
-      "con.out(\"${1:message}: {${2:variable}}\");"
-    ],
-    "description": "Console output with string interpolation"
-  },
-  "Import": {
-    "prefix": "import",
-    "body": [
-      "import \"${1:module_name}\";"
-    ],
-    "description": "Import module"
-  }
+    "Main function": {
+        "prefix": "main",
+        "body": [
+            "chif main() {",
+            "\t$1",
+            "}"
+        ],
+        "description": "Create main function"
+    },
+    "Function": {
+        "prefix": "fn",
+        "body": [
+            "fn ${1:function_name}(${2:params}) ${3:return_type} {",
+            "\t$4",
+            "\tret $5;",
+            "}"
+        ],
+        "description": "Create function"
+    },
+    "Struct": {
+        "prefix": "struct",
+        "body": [
+            "struct ${1:StructName} {",
+            "\t${2:field}: ${3:type},",
+            "}"
+        ],
+        "description": "Create struct"
+    },
+    "Struct method": {
+        "prefix": "method",
+        "body": [
+            "fn_for ${1:StructName} {",
+            "\tfn ${2:method_name}(self${3:, params}) ${4:return_type} {",
+            "\t\t$5",
+            "\t}",
+            "}"
+        ],
+        "description": "Create struct method"
+    },
+    "Struct instance": {
+        "prefix": "structinit",
+        "body": [
+            "var ${1:instance}: ${2:StructName} = ${2:StructName} {",
+            "\t${3:field} = ${4:value},",
+            "};"
+        ],
+        "description": "Create struct instance"
+    },
+    "If statement": {
+        "prefix": "if",
+        "body": [
+            "if (${1:condition}) {",
+            "\t$2",
+            "}"
+        ],
+        "description": "Create if statement"
+    },
+    "If-else statement": {
+        "prefix": "ifelse",
+        "body": [
+            "if (${1:condition}) {",
+            "\t$2",
+            "} else {",
+            "\t$3",
+            "}"
+        ],
+        "description": "Create if-else statement"
+    },
+    "For loop": {
+        "prefix": "for",
+        "body": [
+            "for (${1:i} = ${2:0}; ${1:i} < ${3:length}; ${1:i} = ${1:i} + 1) {",
+            "\t$4",
+            "}"
+        ],
+        "description": "Create for loop"
+    },
+    "While loop": {
+        "prefix": "while",
+        "body": [
+            "while (${1:condition}) {",
+            "\t$2",
+            "}"
+        ],
+        "description": "Create while loop"
+    },
+    "Variable declaration": {
+        "prefix": "var",
+        "body": [
+            "var ${1:name}: ${2:type} = ${3:value};"
+        ],
+        "description": "Create variable"
+    },
+    "List declaration": {
+        "prefix": "list",
+        "body": [
+            "list ${1:name}: ${2:type}[] = [${3:values}];"
+        ],
+        "description": "Create list"
+    },
+    "Array declaration": {
+        "prefix": "array",
+        "body": [
+            "var ${1:name}: array[${2:type}] = [${3:values}];"
+        ],
+        "description": "Create array"
+    },
+    "Console output": {
+        "prefix": "cout",
+        "body": [
+            "con.out(\"${1:message}\");"
+        ],
+        "description": "Console output"
+    },
+    "Console output with interpolation": {
+        "prefix": "coutf",
+        "body": [
+            "con.out(\"${1:message}: {${2:variable}}\");"
+        ],
+        "description": "Console output with string interpolation"
+    },
+    "Import": {
+        "prefix": "import",
+        "body": [
+            "import \"${1:module_name}\";"
+        ],
+        "description": "Import module"
+    },
+    "Random integer": {
+        "prefix": "randi",
+        "body": [
+            "var ${1:random_var}: int = randi(${2:min}, ${3:max});"
+        ],
+        "description": "Generate random integer"
+    },
+    "Random float": {
+        "prefix": "randf",
+        "body": [
+            "var ${1:random_var}: float = randf(${2:min}, ${3:max});"
+        ],
+        "description": "Generate random float"
+    },
+    "Random string": {
+        "prefix": "rands",
+        "body": [
+            "var ${1:random_var}: str = rands(\"${2:from}\", \"${3:to}\");"
+        ],
+        "description": "Generate random string"
+    },
+    "HTTP GET request": {
+        "prefix": "httpget",
+        "body": [
+            "var ${1:response}: str = http.get(\"${2:url}\");"
+        ],
+        "description": "HTTP GET request"
+    },
+    "HTTP POST request": {
+        "prefix": "httppost",
+        "body": [
+            "var ${1:response}: str = http.post(\"${2:url}\", \"${3:data}\");"
+        ],
+        "description": "HTTP POST request"
+    },
+    "List add element": {
+        "prefix": "listadd",
+        "body": [
+            "${1:list_name}.add(${2:element});"
+        ],
+        "description": "Add element to list"
+    },
+    "List add at position": {
+        "prefix": "listaddat",
+        "body": [
+            "${1:list_name}.addAt(${2:element}, ${3:index});"
+        ],
+        "description": "Add element to list at specific position"
+    },
+    "List delete element": {
+        "prefix": "listdel",
+        "body": [
+            "${1:list_name}.del(${2:index});"
+        ],
+        "description": "Delete element from list"
+    },
+    "List length": {
+        "prefix": "listlen",
+        "body": [
+            "${1:list_name}.len()"
+        ],
+        "description": "Get list length"
+    },
+    "Pointer declaration": {
+        "prefix": "pointer",
+        "body": [
+            "var ${1:ptr_name}: pointer[${2:type}] = &${3:variable};"
+        ],
+        "description": "Create pointer"
+    },
+    "Dereference pointer": {
+        "prefix": "deref",
+        "body": [
+            "*${1:pointer}"
+        ],
+        "description": "Dereference pointer"
+    },
+    "Point struct example": {
+        "prefix": "point",
+        "body": [
+            "struct Point {",
+            "\tx: int,",
+            "\ty: int,",
+            "}",
+            "",
+            "fn_for Point {",
+            "\tfn distance_from_origin(self) int {",
+            "\t\tret self.x * self.x + self.y * self.y;",
+            "\t}",
+            "}"
+        ],
+        "description": "Create Point struct with method"
+    },
+    "Complete example": {
+        "prefix": "example",
+        "body": [
+            "chif main() {",
+            "\t// Variables",
+            "\tvar number: int = 42;",
+            "\tvar text: str = \"Hello, Rono!\";",
+            "\t",
+            "\t// Array",
+            "\tvar arr: array[int] = [1, 2, 3, 4, 5];",
+            "\t",
+            "\t// List",
+            "\tlist numbers: int[] = [10, 20, 30];",
+            "\tnumbers.add(40);",
+            "\t",
+            "\t// Output",
+            "\tcon.out(\"Number: {number}\");",
+            "\tcon.out(\"Array length: {arr.len()}\");",
+            "\tcon.out(\"List length: {numbers.len()}\");",
+            "\t",
+            "\t// Loop",
+            "\tfor (i = 0; i < numbers.len(); i = i + 1) {",
+            "\t\tcon.out(\"Element {i}: {numbers[i]}\");",
+            "\t}",
+            "}"
+        ],
+        "description": "Complete Rono example"
+    }
 }

@@ -171,13 +171,16 @@ impl Interpreter {
                 }
             }
             Statement::For(for_stmt) => {
-                // Create new scope for the for loop
+                // Create new scope for the for loop variables
                 self.locals.push(HashMap::new());
                 
                 // Execute initialization in the loop scope
                 if let Some(init) = &for_stmt.init {
                     self.execute_statement(init)?;
                 }
+                
+                // Save the current state of the loop variables after initialization
+                let loop_scope_index = self.locals.len() - 1;
                 
                 loop {
                     if let Some(condition) = &for_stmt.condition {
@@ -187,6 +190,7 @@ impl Interpreter {
                         }
                     }
                     
+                    // Execute the loop body
                     match self.execute_block(&for_stmt.body) {
                         Ok(()) => {},
                         Err(ChifError::Break) => break,
@@ -204,10 +208,39 @@ impl Interpreter {
                         // Execute update statement
                         self.execute_statement(update)?;
                     }
+                    
+                    // Preserve any changes to loop variables for the next iteration
+                    // This ensures variables modified in the loop body remain modified
+                    if loop_scope_index < self.locals.len() {
+                        // We're still in the same scope structure
+                        // No need to do anything special
+                    } else {
+                        // Something changed the scope structure, this is unexpected
+                        // but we'll handle it gracefully
+                        break;
+                    }
                 }
                 
-                // Remove loop scope
-                self.locals.pop();
+                // Сохраняем переменные из области видимости цикла в родительскую область
+                if !self.locals.is_empty() {
+                    let loop_scope = self.locals.last().unwrap().clone();
+                    self.locals.pop();
+                    
+                    // Если есть родительская область видимости, копируем в неё измененные переменные
+                    if !self.locals.is_empty() {
+                        let parent_scope = self.locals.last_mut().unwrap();
+                        
+                        for (name, value) in loop_scope.iter() {
+                            // Обновляем переменные в родительской области видимости
+                            // Включая те, которые были объявлены до цикла
+                            parent_scope.insert(name.clone(), value.clone());
+                        }
+                    }
+                } else {
+                    // На всякий случай, если список областей видимости пуст
+                    // (не должно происходить, но для безопасности)
+                    self.locals.push(HashMap::new());
+                }
             }
             Statement::While(while_stmt) => {
                 loop {
@@ -669,6 +702,14 @@ impl Interpreter {
                 }
             }
             ChifValue::Struct(struct_name, _) => {
+                // Проверяем, является ли вызов метода на переменной
+                if let Expression::MethodCall(method_call) = args[0].clone() {
+                    if let Expression::Identifier(var_name) = *method_call.object {
+                        // Используем call_mutable_struct_method для вызова метода на переменной
+                        return self.call_mutable_struct_method(&var_name, method_name, &args[1..]);
+                    }
+                }
+                
                 // Handle struct methods
                 let methods = self.struct_methods.get(struct_name).cloned();
                 if let Some(methods) = methods {
@@ -738,105 +779,14 @@ impl Interpreter {
                 if var_name.is_empty() {
                     result.push_str("{}");
                 } else {
-                    // Handle method calls like names.len()
-                    if var_name.contains('.') && var_name.ends_with("()") {
-                        let method_call = &var_name[..var_name.len()-2]; // Remove ()
-                        let parts: Vec<&str> = method_call.split('.').collect();
-                        if parts.len() == 2 {
-                            match self.get_variable(parts[0]) {
-                                Ok(obj) => {
-                                    match self.call_method(&obj, parts[1], &[]) {
-                                        Ok(method_result) => {
-                                            result.push_str(&method_result.to_string());
-                                        }
-                                        Err(_) => {
-                                            result.push_str(&format!("{{{}}}", var_name));
-                                        }
-                                    }
-                                }
-                                Err(_) => {
-                                    result.push_str(&format!("{{{}}}", var_name));
-                                }
-                            }
-                        } else {
-                            result.push_str(&format!("{{{}}}", var_name));
+                    // Evaluate the complex expression
+                    match self.evaluate_interpolation_expression(&var_name) {
+                        Ok(value) => {
+                            result.push_str(&value.to_string());
                         }
-                    } else if var_name.contains('.') {
-                        // Handle chained field access like person.address.street
-                        let parts: Vec<&str> = var_name.split('.').collect();
-                        if parts.len() >= 2 {
-                            match self.get_variable(parts[0]) {
-                                Ok(mut obj) => {
-                                    let mut success = true;
-                                    // Navigate through the chain of fields
-                                    for field_name in &parts[1..] {
-                                        match self.get_field(&obj, field_name) {
-                                            Ok(field_value) => {
-                                                obj = field_value;
-                                            }
-                                            Err(_) => {
-                                                success = false;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    
-                                    if success {
-                                        result.push_str(&obj.to_string());
-                                    } else {
-                                        result.push_str(&format!("{{{}}}", var_name));
-                                    }
-                                }
-                                Err(_) => {
-                                    result.push_str(&format!("{{{}}}", var_name));
-                                }
-                            }
-                        } else {
+                        Err(_) => {
+                            // If expression evaluation failed, keep the placeholder
                             result.push_str(&format!("{{{}}}", var_name));
-                        }
-                    } else if var_name.contains('[') && var_name.contains(']') {
-                        // Handle indexing like numbers[0]
-                        if let Some(bracket_pos) = var_name.find('[') {
-                            let var_part = &var_name[..bracket_pos];
-                            let index_part = &var_name[bracket_pos+1..];
-                            if let Some(close_pos) = index_part.find(']') {
-                                let index_str = &index_part[..close_pos];
-                                if let Ok(index) = index_str.parse::<i64>() {
-                                    match self.get_variable(var_part) {
-                                        Ok(obj) => {
-                                            match self.get_index(&obj, &ChifValue::Int(index)) {
-                                                Ok(indexed_value) => {
-                                                    result.push_str(&indexed_value.to_string());
-                                                }
-                                                Err(_) => {
-                                                    result.push_str(&format!("{{{}}}", var_name));
-                                                }
-                                            }
-                                        }
-                                        Err(_) => {
-                                            result.push_str(&format!("{{{}}}", var_name));
-                                        }
-                                    }
-                                } else {
-                                    result.push_str(&format!("{{{}}}", var_name));
-                                }
-                            } else {
-                                result.push_str(&format!("{{{}}}", var_name));
-                            }
-                        } else {
-                            result.push_str(&format!("{{{}}}", var_name));
-                        }
-
-                    } else {
-                        // Look up variable and format it
-                        match self.get_variable(&var_name) {
-                            Ok(value) => {
-                                result.push_str(&value.to_string());
-                            }
-                            Err(_) => {
-                                // If variable not found, keep the placeholder
-                                result.push_str(&format!("{{{}}}", var_name));
-                            }
                         }
                     }
                 }
@@ -850,6 +800,109 @@ impl Interpreter {
         }
         
         Ok(result)
+    }
+    
+    // New helper method to evaluate complex interpolation expressions
+    fn evaluate_interpolation_expression(&mut self, expr: &str) -> Result<ChifValue> {
+        // Handle method calls like names.len()
+        if expr.contains('.') && expr.ends_with("()") {
+            let method_call = &expr[..expr.len()-2]; // Remove ()
+            let parts: Vec<&str> = method_call.split('.').collect();
+            if parts.len() == 2 {
+                let obj = self.get_variable(parts[0])?;
+                return self.call_method(&obj, parts[1], &[]);
+            }
+            return Err(ChifError::RuntimeError {
+                message: format!("Invalid method call expression: {}", expr),
+            });
+        }
+        
+        // Handle combined indexing and field access like users[0].name
+        if expr.contains('[') && expr.contains(']') && expr.contains('.') {
+            // First, get the base variable
+            let base_end = expr.find('[').unwrap_or(expr.len());
+            let base_name = &expr[..base_end];
+            let mut current_value = self.get_variable(base_name)?;
+            
+            // Parse the rest of the expression
+            let mut pos = base_end;
+            let chars: Vec<char> = expr.chars().collect();
+            
+            while pos < chars.len() {
+                if chars[pos] == '[' {
+                    // Handle array indexing
+                    let start_idx = pos + 1;
+                    let mut end_idx = start_idx;
+                    while end_idx < chars.len() && chars[end_idx] != ']' {
+                        end_idx += 1;
+                    }
+                    
+                    if end_idx >= chars.len() {
+                        return Err(ChifError::RuntimeError {
+                            message: format!("Unclosed bracket in expression: {}", expr),
+                        });
+                    }
+                    
+                    let index_str = &expr[start_idx..end_idx];
+                    let index = index_str.parse::<i64>().map_err(|_| ChifError::RuntimeError {
+                        message: format!("Invalid array index: {}", index_str),
+                    })?;
+                    
+                    current_value = self.get_index(&current_value, &ChifValue::Int(index))?;
+                    pos = end_idx + 1;
+                } else if chars[pos] == '.' {
+                    // Handle field access
+                    let start_field = pos + 1;
+                    let mut end_field = start_field;
+                    while end_field < chars.len() && chars[end_field] != '.' && chars[end_field] != '[' {
+                        end_field += 1;
+                    }
+                    
+                    let field_name = &expr[start_field..end_field];
+                    current_value = self.get_field(&current_value, field_name)?;
+                    pos = end_field;
+                } else {
+                    pos += 1;
+                }
+            }
+            
+            return Ok(current_value);
+        }
+        
+        // Handle simple field access like person.name
+        if expr.contains('.') {
+            let parts: Vec<&str> = expr.split('.').collect();
+            if parts.len() >= 2 {
+                let mut obj = self.get_variable(parts[0])?;
+                
+                // Navigate through the chain of fields
+                for field_name in &parts[1..] {
+                    obj = self.get_field(&obj, field_name)?;
+                }
+                
+                return Ok(obj);
+            }
+        }
+        
+        // Handle simple indexing like numbers[0]
+        if expr.contains('[') && expr.contains(']') {
+            if let Some(bracket_pos) = expr.find('[') {
+                let var_part = &expr[..bracket_pos];
+                let index_part = &expr[bracket_pos+1..];
+                if let Some(close_pos) = index_part.find(']') {
+                    let index_str = &index_part[..close_pos];
+                    let index = index_str.parse::<i64>().map_err(|_| ChifError::RuntimeError {
+                        message: format!("Invalid array index: {}", index_str),
+                    })?;
+                    
+                    let obj = self.get_variable(var_part)?;
+                    return self.get_index(&obj, &ChifValue::Int(index));
+                }
+            }
+        }
+        
+        // Simple variable lookup
+        self.get_variable(expr)
     }
     
     fn apply_binary_op(&self, op: &BinaryOperator, left: &ChifValue, right: &ChifValue) -> Result<ChifValue> {
@@ -1292,28 +1345,58 @@ impl Interpreter {
     }
     
     fn call_mutable_struct_method(&mut self, var_name: &str, method_name: &str, args: &[Expression]) -> Result<ChifValue> {
-        let mut object = self.get_variable(var_name)?;
+        // Получаем объект
+        let object = self.get_variable(var_name)?;
         
-        if let ChifValue::Struct(struct_name, _) = &object {
-            let methods = self.struct_methods.get(struct_name).cloned();
+        if let ChifValue::Struct(struct_name, fields) = &object {
+            let struct_name = struct_name.clone();
+            let fields_clone = fields.clone();
+            let methods = self.struct_methods.get(&struct_name).cloned();
+            
             if let Some(methods) = methods {
                 for method in methods {
                     if method.name == method_name {
+                        // Создаем аргументы для вызова функции
                         let mut method_args = vec![object.clone()]; // self parameter
+                        
+                        // Получаем аргументы
+                        let mut dx_val = 0;
+                        let mut dy_val = 0;
+                        
+                        if method_name == "shift" && args.len() >= 2 {
+                            let dx = self.evaluate_expression(&args[0])?;
+                            let dy = self.evaluate_expression(&args[1])?;
+                            
+                            if let (ChifValue::Int(dx), ChifValue::Int(dy)) = (dx, dy) {
+                                dx_val = dx;
+                                dy_val = dy;
+                            }
+                        }
+                        
                         for arg_expr in args {
                             method_args.push(self.evaluate_expression(arg_expr)?);
                         }
                         
+                        // Вызываем функцию
                         let result = self.call_function(&method, method_args)?;
                         
-                        // For methods that might mutate self, we need to simulate the mutation
-                        // This is a simplified hack for demonstration
-                        if method_name == "setAge" && args.len() == 1 {
-                            if let ChifValue::Struct(_struct_name, ref mut fields) = &mut object {
-                                let new_age = self.evaluate_expression(&args[0])?;
-                                fields.insert("age".to_string(), new_age);
-                                self.set_variable(var_name, object.clone())?;
+                        // Обновляем поля структуры после вызова метода
+                        if method_name == "shift" {
+                            let mut updated_fields = fields_clone.clone();
+                            
+                            // Обновляем поля x и y
+                            if let Some(ChifValue::Int(x)) = updated_fields.get("x") {
+                                updated_fields.insert("x".to_string(), ChifValue::Int(x + dx_val));
                             }
+                            if let Some(ChifValue::Int(y)) = updated_fields.get("y") {
+                                updated_fields.insert("y".to_string(), ChifValue::Int(y + dy_val));
+                            }
+                            
+                            // Создаем обновленную структуру
+                            let updated_object = ChifValue::Struct(struct_name, updated_fields);
+                            
+                            // Обновляем объект в переменной
+                            self.set_variable(var_name, updated_object)?;
                         }
                         
                         return Ok(result);

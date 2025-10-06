@@ -19,6 +19,7 @@ Thumbs.db
 *.so
 *.dylib
 *.o
+*.rono
 build/
 
 # Debug files

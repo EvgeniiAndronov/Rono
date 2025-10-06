@@ -60,6 +60,7 @@ pub struct FunctionSignature {
     pub name: String,
     pub parameters: Vec<Parameter>,
     pub return_type: ChifType,
+    pub is_mutating: bool,  // Новое поле для отслеживания мутирующих методов
 }
 
 #[derive(Debug, Clone)]
@@ -548,6 +549,7 @@ impl SemanticAnalyzer {
                         name: func.name.clone(),
                         parameters: func.params.clone(),
                         return_type: func.return_type.clone().unwrap_or(ChifType::Nil),
+                        is_mutating: false,  // Обычные функции по умолчанию не мутируют
                     };
                     
                     let symbol = Symbol {
@@ -578,10 +580,15 @@ impl SemanticAnalyzer {
                     // Add methods to symbol table with struct prefix
                     for method in &impl_block.methods {
                         let method_name = format!("{}_{}", impl_block.struct_name, method.name);
+                        
+                        // Анализируем тело метода для определения мутабельности
+                        let is_mutating = self.analyze_method_mutability(method);
+                        
                         let signature = FunctionSignature {
                             name: method_name.clone(),
                             parameters: method.params.clone(),
                             return_type: method.return_type.clone().unwrap_or(ChifType::Nil),
+                            is_mutating,  // Устанавливаем флаг мутабельности
                         };
                         
                         let symbol = Symbol {
@@ -1327,6 +1334,7 @@ impl SemanticAnalyzer {
                 Parameter { name: "max".to_string(), param_type: ChifType::Int, is_reference: false },
             ],
             return_type: ChifType::Int,
+            is_mutating: false,  // Встроенные функции не мутируют
         };
         let randi_symbol = Symbol {
             name: "randi".to_string(),
@@ -1343,6 +1351,7 @@ impl SemanticAnalyzer {
                 Parameter { name: "max".to_string(), param_type: ChifType::Float, is_reference: false },
             ],
             return_type: ChifType::Float,
+            is_mutating: false,  // Встроенные функции не мутируют
         };
         let randf_symbol = Symbol {
             name: "randf".to_string(),
@@ -1359,6 +1368,7 @@ impl SemanticAnalyzer {
                 Parameter { name: "to".to_string(), param_type: ChifType::Str, is_reference: false },
             ],
             return_type: ChifType::Str,
+            is_mutating: false,  // Встроенные функции не мутируют
         };
         let rands_symbol = Symbol {
             name: "rands".to_string(),
@@ -1426,6 +1436,7 @@ impl SemanticAnalyzer {
                         name: func.name.clone(),
                         parameters: func.params.clone(),
                         return_type: func.return_type.clone().unwrap_or(ChifType::Nil),
+                        is_mutating: false,  // Импортированные функции по умолчанию не мутируют
                     };
                     module_functions.insert(func.name.clone(), signature.clone());
                     
@@ -1490,6 +1501,7 @@ impl SemanticAnalyzer {
                             name: method_name.clone(),
                             parameters: method.params.clone(),
                             return_type: method.return_type.clone().unwrap_or(ChifType::Nil),
+                            is_mutating: false,  // Методы импортированных структур по умолчанию не мутируют
                         };
                         
                         let symbol = Symbol {
@@ -1524,6 +1536,83 @@ impl SemanticAnalyzer {
         self.modules.insert(module_name, module_info);
         
         Ok(())
+    }
+    
+    /// Анализирует тело метода для определения, изменяет ли он поля структуры через self
+    fn analyze_method_mutability(&self, method: &Function) -> bool {
+        // Проверяем, есть ли параметр self
+        let has_self = method.params.iter().any(|param| param.name == "self");
+        if !has_self {
+            return false; // Если нет self, метод не может быть мутирующим
+        }
+        
+        // Анализируем тело метода на предмет изменения полей self
+        self.analyze_block_for_self_mutation(&method.body)
+    }
+    
+    /// Рекурсивно анализирует блок кода на предмет мутации полей self
+    fn analyze_block_for_self_mutation(&self, block: &Block) -> bool {
+        for statement in &block.statements {
+            if self.analyze_statement_for_self_mutation(statement) {
+                return true;
+            }
+        }
+        false
+    }
+    
+    /// Анализирует отдельное утверждение на предмет мутации полей self
+    fn analyze_statement_for_self_mutation(&self, statement: &Statement) -> bool {
+        match statement {
+            Statement::Assignment(assignment) => {
+                // Проверяем, является ли цель присваивания полем self
+                self.is_self_field_access(&assignment.target)
+            }
+            Statement::If(if_stmt) => {
+                // Проверяем оба блока if-else
+                let then_mutates = self.analyze_block_for_self_mutation(&if_stmt.then_block);
+                let else_mutates = if let Some(else_block) = &if_stmt.else_block {
+                    self.analyze_block_for_self_mutation(else_block)
+                } else {
+                    false
+                };
+                then_mutates || else_mutates
+            }
+            Statement::For(for_stmt) => {
+                // Проверяем тело цикла
+                self.analyze_block_for_self_mutation(&for_stmt.body)
+            }
+            Statement::While(while_stmt) => {
+                // Проверяем тело цикла
+                self.analyze_block_for_self_mutation(&while_stmt.body)
+            }
+            Statement::Switch(switch_stmt) => {
+                // Проверяем все случаи switch
+                for case in &switch_stmt.cases {
+                    if self.analyze_block_for_self_mutation(&case.body) {
+                        return true;
+                    }
+                }
+                if let Some(default_case) = &switch_stmt.default_case {
+                    return self.analyze_block_for_self_mutation(default_case);
+                }
+                false
+            }
+            _ => false, // Другие типы утверждений не мутируют self
+        }
+    }
+    
+    /// Проверяет, является ли выражение доступом к полю self (например, self.x)
+    fn is_self_field_access(&self, expr: &Expression) -> bool {
+        match expr {
+            Expression::FieldAccess(field_access) => {
+                // Проверяем, является ли объект доступа к полю идентификатором "self"
+                match field_access.object.as_ref() {
+                    Expression::Identifier(name) => name == "self",
+                    _ => false,
+                }
+            }
+            _ => false,
+        }
     }
 }
 
