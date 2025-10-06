@@ -328,10 +328,10 @@ impl Interpreter {
             Expression::Call(call) => {
                 // Handle built-in functions
                 match call.name.as_str() {
-                    "int" => {
+                    "toInt" => {
                         if call.args.len() != 1 {
                             return Err(ChifError::RuntimeError {
-                                message: "int() expects 1 argument".to_string(),
+                                message: "toInt() expects 1 argument".to_string(),
                             });
                         }
                         let value = self.evaluate_expression(&call.args[0])?;
@@ -354,10 +354,10 @@ impl Interpreter {
                             }),
                         }
                     }
-                    "float" => {
+                    "toFloat" => {
                         if call.args.len() != 1 {
                             return Err(ChifError::RuntimeError {
-                                message: "float() expects 1 argument".to_string(),
+                                message: "toFloat() expects 1 argument".to_string(),
                             });
                         }
                         let value = self.evaluate_expression(&call.args[0])?;
@@ -380,10 +380,10 @@ impl Interpreter {
                             }),
                         }
                     }
-                    "str" => {
+                    "toStr" => {
                         if call.args.len() != 1 {
                             return Err(ChifError::RuntimeError {
-                                message: "str() expects 1 argument".to_string(),
+                                message: "toStr() expects 1 argument".to_string(),
                             });
                         }
                         let value = self.evaluate_expression(&call.args[0])?;

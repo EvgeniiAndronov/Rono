@@ -1379,9 +1379,9 @@ impl SemanticAnalyzer {
         self.symbol_table.define_symbol(rands_symbol)?;
         
         // Добавляем функции конвертации типов
-        // int() может принимать строку или число с плавающей точкой
+        // toInt() может принимать строку или число с плавающей точкой
         let int_signature = FunctionSignature {
-            name: "int".to_string(),
+            name: "toInt".to_string(),
             parameters: vec![
                 Parameter { name: "value".to_string(), param_type: ChifType::Float, is_reference: false },
             ],
@@ -1389,7 +1389,7 @@ impl SemanticAnalyzer {
             is_mutating: false,
         };
         let int_symbol = Symbol {
-            name: "int".to_string(),
+            name: "toInt".to_string(),
             symbol_type: SymbolType::Function(int_signature),
             location: SourceLocation::unknown(),
             is_mutable: false,
@@ -1397,7 +1397,7 @@ impl SemanticAnalyzer {
         self.symbol_table.define_symbol(int_symbol)?;
         
         let int_str_signature = FunctionSignature {
-            name: "int".to_string(),
+            name: "toInt".to_string(),
             parameters: vec![
                 Parameter { name: "value".to_string(), param_type: ChifType::Str, is_reference: false },
             ],
@@ -1405,16 +1405,16 @@ impl SemanticAnalyzer {
             is_mutating: false,
         };
         let int_str_symbol = Symbol {
-            name: "int".to_string(),
+            name: "toInt".to_string(),
             symbol_type: SymbolType::Function(int_str_signature),
             location: SourceLocation::unknown(),
             is_mutable: false,
         };
         self.symbol_table.define_symbol(int_str_symbol)?;
         
-        // float() может принимать строку или целое число
+        // toFloat() может принимать строку или целое число
         let float_signature = FunctionSignature {
-            name: "float".to_string(),
+            name: "toFloat".to_string(),
             parameters: vec![
                 Parameter { name: "value".to_string(), param_type: ChifType::Int, is_reference: false },
             ],
@@ -1422,7 +1422,7 @@ impl SemanticAnalyzer {
             is_mutating: false,
         };
         let float_symbol = Symbol {
-            name: "float".to_string(),
+            name: "toFloat".to_string(),
             symbol_type: SymbolType::Function(float_signature),
             location: SourceLocation::unknown(),
             is_mutable: false,
@@ -1430,7 +1430,7 @@ impl SemanticAnalyzer {
         self.symbol_table.define_symbol(float_symbol)?;
         
         let float_str_signature = FunctionSignature {
-            name: "float".to_string(),
+            name: "toFloat".to_string(),
             parameters: vec![
                 Parameter { name: "value".to_string(), param_type: ChifType::Str, is_reference: false },
             ],
@@ -1438,16 +1438,16 @@ impl SemanticAnalyzer {
             is_mutating: false,
         };
         let float_str_symbol = Symbol {
-            name: "float".to_string(),
+            name: "toFloat".to_string(),
             symbol_type: SymbolType::Function(float_str_signature),
             location: SourceLocation::unknown(),
             is_mutable: false,
         };
         self.symbol_table.define_symbol(float_str_symbol)?;
         
-        // str() может принимать целое число или число с плавающей точкой
+        // toStr() может принимать целое число или число с плавающей точкой
         let str_int_signature = FunctionSignature {
-            name: "str".to_string(),
+            name: "toStr".to_string(),
             parameters: vec![
                 Parameter { name: "value".to_string(), param_type: ChifType::Int, is_reference: false },
             ],
@@ -1455,7 +1455,7 @@ impl SemanticAnalyzer {
             is_mutating: false,
         };
         let str_int_symbol = Symbol {
-            name: "str".to_string(),
+            name: "toStr".to_string(),
             symbol_type: SymbolType::Function(str_int_signature),
             location: SourceLocation::unknown(),
             is_mutable: false,
@@ -1463,7 +1463,7 @@ impl SemanticAnalyzer {
         self.symbol_table.define_symbol(str_int_symbol)?;
         
         let str_float_signature = FunctionSignature {
-            name: "str".to_string(),
+            name: "toStr".to_string(),
             parameters: vec![
                 Parameter { name: "value".to_string(), param_type: ChifType::Float, is_reference: false },
             ],
@@ -1471,7 +1471,7 @@ impl SemanticAnalyzer {
             is_mutating: false,
         };
         let str_float_symbol = Symbol {
-            name: "str".to_string(),
+            name: "toStr".to_string(),
             symbol_type: SymbolType::Function(str_float_signature),
             location: SourceLocation::unknown(),
             is_mutable: false,
