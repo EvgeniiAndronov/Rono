@@ -328,6 +328,75 @@ impl Interpreter {
             Expression::Call(call) => {
                 // Handle built-in functions
                 match call.name.as_str() {
+                    "int" => {
+                        if call.args.len() != 1 {
+                            return Err(ChifError::RuntimeError {
+                                message: "int() expects 1 argument".to_string(),
+                            });
+                        }
+                        let value = self.evaluate_expression(&call.args[0])?;
+                        
+                        match value {
+                            ChifValue::Int(i) => Ok(ChifValue::Int(i)), // Уже целое число
+                            ChifValue::Float(f) => Ok(ChifValue::Int(f as i64)), // Преобразование из float
+                            ChifValue::Str(s) => {
+                                // Преобразование из строки
+                                match s.parse::<i64>() {
+                                    Ok(i) => Ok(ChifValue::Int(i)),
+                                    Err(_) => Err(ChifError::RuntimeError {
+                                        message: format!("Cannot convert string '{}' to int", s),
+                                    }),
+                                }
+                            }
+                            ChifValue::Bool(b) => Ok(ChifValue::Int(if b { 1 } else { 0 })), // Преобразование из bool
+                            _ => Err(ChifError::RuntimeError {
+                                message: format!("Cannot convert {:?} to int", value),
+                            }),
+                        }
+                    }
+                    "float" => {
+                        if call.args.len() != 1 {
+                            return Err(ChifError::RuntimeError {
+                                message: "float() expects 1 argument".to_string(),
+                            });
+                        }
+                        let value = self.evaluate_expression(&call.args[0])?;
+                        
+                        match value {
+                            ChifValue::Float(f) => Ok(ChifValue::Float(f)), // Уже float
+                            ChifValue::Int(i) => Ok(ChifValue::Float(i as f64)), // Преобразование из int
+                            ChifValue::Str(s) => {
+                                // Преобразование из строки
+                                match s.parse::<f64>() {
+                                    Ok(f) => Ok(ChifValue::Float(f)),
+                                    Err(_) => Err(ChifError::RuntimeError {
+                                        message: format!("Cannot convert string '{}' to float", s),
+                                    }),
+                                }
+                            }
+                            ChifValue::Bool(b) => Ok(ChifValue::Float(if b { 1.0 } else { 0.0 })), // Преобразование из bool
+                            _ => Err(ChifError::RuntimeError {
+                                message: format!("Cannot convert {:?} to float", value),
+                            }),
+                        }
+                    }
+                    "str" => {
+                        if call.args.len() != 1 {
+                            return Err(ChifError::RuntimeError {
+                                message: "str() expects 1 argument".to_string(),
+                            });
+                        }
+                        let value = self.evaluate_expression(&call.args[0])?;
+                        
+                        match value {
+                            ChifValue::Str(s) => Ok(ChifValue::Str(s)), // Уже строка
+                            ChifValue::Int(i) => Ok(ChifValue::Str(i.to_string())), // Преобразование из int
+                            ChifValue::Float(f) => Ok(ChifValue::Str(f.to_string())), // Преобразование из float
+                            ChifValue::Bool(b) => Ok(ChifValue::Str(b.to_string())), // Преобразование из bool
+                            ChifValue::Nil => Ok(ChifValue::Str("nil".to_string())), // Преобразование из nil
+                            _ => Ok(ChifValue::Str(format!("{:?}", value))), // Для остальных типов используем Debug
+                        }
+                    }
                     "randi" => {
                         if call.args.len() != 2 {
                             return Err(ChifError::RuntimeError {
@@ -1061,6 +1130,11 @@ impl Interpreter {
                     })
                 }
             }
+            ChifValue::Reference(var_name) => {
+                // Если это ссылка, получаем объект и вызываем get_field рекурсивно
+                let referenced_object = self.get_variable(var_name)?;
+                self.get_field(&referenced_object, field)
+            }
             _ => Err(ChifError::RuntimeError {
                 message: "Cannot access field on non-struct value".to_string(),
             }),
@@ -1073,10 +1147,32 @@ impl Interpreter {
         Ok(())
     }
     
-    fn assign_to_field(&mut self, _field_access: &FieldAccess, _value: ChifValue) -> Result<()> {
-        // This is a simplified implementation
-        // In a real implementation, we'd need to handle mutable references properly
-        Ok(())
+    fn assign_to_field(&mut self, field_access: &FieldAccess, value: ChifValue) -> Result<()> {
+        // Получаем объект
+        let object_expr = &*field_access.object;
+        
+        // Обрабатываем случай, когда объект - это идентификатор
+        if let Expression::Identifier(var_name) = object_expr {
+            let mut object = self.get_variable(var_name)?;
+            
+            if let ChifValue::Struct(struct_name, mut fields) = object {
+                fields.insert(field_access.field.clone(), value);
+                self.set_variable(var_name, ChifValue::Struct(struct_name, fields))?;
+                return Ok(());
+            } else if let ChifValue::Reference(ref_var_name) = object {
+                // Если объект - ссылка, получаем реальный объект
+                let mut ref_object = self.get_variable(&ref_var_name)?;
+                if let ChifValue::Struct(struct_name, mut fields) = ref_object {
+                    fields.insert(field_access.field.clone(), value);
+                    self.set_variable(&ref_var_name, ChifValue::Struct(struct_name, fields))?;
+                    return Ok(());
+                }
+            }
+        }
+        
+        Err(ChifError::RuntimeError {
+            message: "Cannot assign to field on non-struct value".to_string(),
+        })
     }
     
     fn is_truthy(&self, value: &ChifValue) -> bool {
@@ -1348,57 +1444,26 @@ impl Interpreter {
         // Получаем объект
         let object = self.get_variable(var_name)?;
         
-        if let ChifValue::Struct(struct_name, fields) = &object {
+        if let ChifValue::Struct(struct_name, _) = &object {
             let struct_name = struct_name.clone();
-            let fields_clone = fields.clone();
             let methods = self.struct_methods.get(&struct_name).cloned();
             
             if let Some(methods) = methods {
                 for method in methods {
                     if method.name == method_name {
                         // Создаем аргументы для вызова функции
-                        let mut method_args = vec![object.clone()]; // self parameter
+                        let mut method_args = Vec::new();
                         
-                        // Получаем аргументы
-                        let mut dx_val = 0;
-                        let mut dy_val = 0;
+                        // Передаем первый аргумент (self) как ссылку
+                        method_args.push(ChifValue::Reference(var_name.to_string()));
                         
-                        if method_name == "shift" && args.len() >= 2 {
-                            let dx = self.evaluate_expression(&args[0])?;
-                            let dy = self.evaluate_expression(&args[1])?;
-                            
-                            if let (ChifValue::Int(dx), ChifValue::Int(dy)) = (dx, dy) {
-                                dx_val = dx;
-                                dy_val = dy;
-                            }
-                        }
-                        
+                        // Добавляем остальные аргументы
                         for arg_expr in args {
                             method_args.push(self.evaluate_expression(arg_expr)?);
                         }
                         
                         // Вызываем функцию
                         let result = self.call_function(&method, method_args)?;
-                        
-                        // Обновляем поля структуры после вызова метода
-                        if method_name == "shift" {
-                            let mut updated_fields = fields_clone.clone();
-                            
-                            // Обновляем поля x и y
-                            if let Some(ChifValue::Int(x)) = updated_fields.get("x") {
-                                updated_fields.insert("x".to_string(), ChifValue::Int(x + dx_val));
-                            }
-                            if let Some(ChifValue::Int(y)) = updated_fields.get("y") {
-                                updated_fields.insert("y".to_string(), ChifValue::Int(y + dy_val));
-                            }
-                            
-                            // Создаем обновленную структуру
-                            let updated_object = ChifValue::Struct(struct_name, updated_fields);
-                            
-                            // Обновляем объект в переменной
-                            self.set_variable(var_name, updated_object)?;
-                        }
-                        
                         return Ok(result);
                     }
                 }

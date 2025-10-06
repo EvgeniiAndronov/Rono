@@ -1,5 +1,5 @@
 use crate::ast::Program;
-use crate::semantic::{SemanticAnalyzer, AnalyzedProgram};
+use crate::semantic::SemanticAnalyzer;
 use crate::ir_gen::IRGenerator;
 
 use cranelift::prelude::settings::{self, Configurable};
@@ -16,6 +16,9 @@ pub enum CompilerError {
         message: String,
     },
     
+    #[error("Semantic analysis error: {0}")]
+    SemanticAnalysis(String),
+    
     #[error("IR generation error: {0}")]
     IRGeneration(String),
     
@@ -25,14 +28,14 @@ pub enum CompilerError {
     #[error("Linker error: {0}")]
     Linker(String),
     
+    #[error("Object write error: {0}")]
+    ObjectWrite(String),
+    
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
     
     #[error("Parse error: {0}")]
     Parse(#[from] crate::error::ChifError),
-    
-    #[error("Object write error: {0}")]
-    ObjectWrite(String),
 }
 
 #[derive(Debug, Clone)]
@@ -62,7 +65,7 @@ impl SourceLocation {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Target {
     X86_64Linux,
     X86_64Windows,
@@ -161,21 +164,21 @@ impl Compiler {
         println!("Debug info: {}", self.debug_info);
         
         // 1. Semantic analysis
-        println!("Running semantic analysis...");
-        let mut semantic_analyzer = SemanticAnalyzer::new();
-        let analyzed_program = semantic_analyzer.analyze(ast)
-            .map_err(|e| CompilerError::Semantic {
-                location: SourceLocation::unknown(),
-                message: e.to_string(),
-            })?;
+        println!("Performing semantic analysis...");
+        let mut analyzer = SemanticAnalyzer::new();
+        let analyzed_program = analyzer.analyze(ast)
+            .map_err(|e| CompilerError::SemanticAnalysis(e.to_string()))?;
         
-        // 2. Create module for this compilation
+        // 2. Setup Cranelift
+        println!("Setting up code generator...");
         let triple = self.target.to_triple();
+        
+        // Create ISA builder
         let mut builder = settings::builder();
         builder.set("opt_level", &self.optimization_level.to_cranelift_opt_level().to_string())
             .map_err(|e| CompilerError::CodeGeneration(format!("Failed to set optimization level: {}", e)))?;
-        
-        // Enable PIC for better compatibility
+            
+        // Enable PIC for macOS ARM64
         #[cfg(target_os = "macos")]
         {
             builder.set("is_pic", "true")

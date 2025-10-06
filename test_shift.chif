@@ -1,0 +1,25 @@
+struct Point {
+    x: int,
+    y: int,
+}
+
+fn pr_inf(p: Point) {
+    Console.out("Point: " + p.x + ", " + p.y);
+}
+
+fn shift(p: Point, dx: int, dy: int) {
+    p.x = p.x + dx;
+    p.y = p.y + dy;
+}
+
+fn main() {
+    let p = Point{x: 10, y: 20};
+    
+    Console.out("Before shift:");
+    pr_inf(p);
+    
+    shift(p, 5, 7);
+    
+    Console.out("After shift:");
+    pr_inf(p);
+}
