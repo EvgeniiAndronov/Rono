@@ -98,9 +98,11 @@ fn_for Point {
         ret self.x * self.x + self.y * self.y;
     }
     
-    fn move_by(self, dx: int, dy: int) {
-        self.x = self.x + dx;
-        self.y = self.y + dy;
+    fn move_by(self, dx: int, dy: int) Point {
+        var new_x: int = self.x + dx;
+        var new_x: int = self.x + dx;
+        var res: Point = Point {x = new_x, y = new_y};
+        ret res;
     }
 }
 
@@ -108,7 +110,7 @@ chif main() {
     var point: Point = Point { x = 3, y = 4 };
     con.out("Distance: {point.distance_from_origin()}");
     
-    point.move_by(1, 1);
+    point = point.move_by(1, 1);
     con.out("New position: ({point.x}, {point.y})");
 }
 ```
